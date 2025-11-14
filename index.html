@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Componentes Conexas de un Grafo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Componentes Conexas de un Grafo</div>
+    <div class="actions">
+      <div class="team">Integrantes: De la Cruz, Jurado, Palomino, Pipa, Rojas</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="left">
+      <div class="controls">
+
+        <div class="input-group">
+          <label for="inputN">N nodos (6-12)</label>
+          <input id="inputN" type="number" min="6" max="12" value="8">
+        </div>
+
+        <button id="btnGen" class="btn primary">Generar Nodos</button>
+
+        <div class="radio-row">
+          <label>Modo:</label>
+          <label><input type="radio" name="modo" value="manual" checked> Manual</label>
+          <label><input type="radio" name="modo" value="aleatorio"> Aleatorio</label>
+        </div>
+
+        <button id="btnConectar" class="btn accent">Conectar y Analizar</button>
+        <button id="btnVer" class="btn secondary">Ver Grafos Conexos</button>
+        <button id="btnLimpiar" class="btn danger">Limpiar Conexiones</button>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="grafoCanvas" width="720" height="720"></canvas>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="panel">
+        <h3>Proceso de identificación de Componentes Conexas</h3>
+        <pre id="logArea" class="log"></pre>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <small>Curso: Matemática Computacional — Profesor: Juan M. Mattos Quevedo</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
