@@ -68,12 +68,40 @@ function generarNodos(){
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   // aristas
-  for(const [u,v] of aristas) drawArrow(nodos[u], nodos[v], '#999');
+  // === ARISTAS CON COLOR SEGÚN COMPONENTE ===
+  for (let compIndex = 0; compIndex < componentes.length; compIndex++) {
+      const comp = componentes[compIndex];
+
+      // Solo coloreamos componentes de tamaño ≥ 2
+      if (comp.length >= 2) {
+          const color = palette[compIndex % palette.length];
+
+          // Dibujar SOLO las aristas internas de la componente
+          for (const [u, v] of aristas) {
+              if (comp.includes(u) && comp.includes(v)) {
+                  drawArrow(nodos[u], nodos[v], color);
+              }
+          }
+      }
+  }
+
+  // Aristas NO pertenecientes a componentes grandes = gris
+  for (const [u, v] of aristas) {
+      if (!componentes.some(c => c.length >= 2 && c.includes(u) && c.includes(v))) {
+          drawArrow(nodos[u], nodos[v], '#999');
+      }
+  }
+
   // nodos
   for(let i=0;i<n;i++){
     const col = (componentes.length? (componentes.flat().includes(i)? getComponentColor(i) : '#43A047') : (nodoSeleccionado===i? '#EF6C00' : '#43A047'));
     drawNode(nodos[i], i, col);
   }
+
+
+
+
+
 }
 
 function drawNode(p, idx, color){
@@ -147,6 +175,72 @@ function getComponentColor(nodeIndex){
   return '#43A047';
 }
 
+
+function logMatrix(mat, titulo = null) {
+    if (titulo) log("📘 " + titulo);
+
+    let header = "      ";
+    for (let i = 0; i < mat.length; i++) header += (i + "   ").padStart(4);
+    log(header);
+
+    let sep = "     " + "-".repeat(mat.length * 4);
+    log(sep);
+
+    for (let i = 0; i < mat.length; i++) {
+        let fila = (i + " | ").padStart(4);
+        for (let j = 0; j < mat.length; j++) {
+            fila += String(mat[i][j]).padStart(4);
+        }
+        log(fila);
+    }
+
+    log("\n");
+}
+function logMatrixResaltada(mat, bloques, titulo = "Matriz con componentes resaltadas") {
+    
+    log(titulo);
+
+
+    const n = mat.length;
+
+    // Encabezado de columnas
+    let header = "      ";
+    for (let i = 0; i < n; i++) header += (i + "   ").padStart(4);
+    log(header);
+
+    // Separador
+    let sep = "     " + "-".repeat(n * 4);
+    log(sep);
+
+    // Revisar si un par (i,j) pertenece a un bloque de componente
+    function isHighlighted(i, j) {
+        for (const b of bloques) {
+            const [f1, f2, c1, c2] = b;
+            if (i >= f1 && i <= f2 && j >= c1 && j <= c2) return true;
+        }
+        return false;
+    }
+
+    // Filas con posible resaltado
+    for (let i = 0; i < n; i++) {
+        let fila = (i + " | ").padStart(4);
+
+        for (let j = 0; j < n; j++) {
+            const val = mat[i][j];
+
+            if (val === 1 && isHighlighted(i, j)) {
+                fila += `[1] `.padStart(4); // resaltar
+            } else {
+                fila += String(val).padStart(4);
+            }
+        }
+
+        log(fila);
+    }
+
+    log("\n");
+}
+
 function analizar(){
   if(!nodos.length) { log('Primero genera los nodos.'); return; }
   clearLog();
@@ -157,12 +251,16 @@ function analizar(){
   const matriz_p1 = matriz.map(r=>r.slice());
   for(let i=0;i<n;i++) matriz_p1[i][i]=1;
   log('Matriz (con diagonal de 1s):');
-  log(JSON.stringify(matriz_p1));
+  logMatrix(matriz_p1, "Matriz (con diagonal de 1s):");
+
+  log(""); // salto final opcional
+
 
   // Construir matriz de caminos (simulación compacta)
   log('\nPASO 2: MATRIZ DE CAMINOS\nSi la fila i tiene un 1 en la columna j, copiar la fila j a la fila i\n');
   let matriz_p2 = matriz.map(r=>r.slice());
   for(let i=0;i<n;i++) matriz_p2[i][i]=1;
+      // salto de línea
 
   // Propagar: versión iterativa por filas (como tu Python)
   for(let i=0;i<n;i++){
@@ -174,14 +272,13 @@ function analizar(){
       hubo_cambios = false;
       const fila_antes = matriz_p2[i].slice();
       const fila_nueva = matriz_p2[i].slice();
-      log(`  iteracion ${iter} de la fila ${i}:`);
-      log(`    Fila ${i} actual: ${JSON.stringify(fila_antes)}`);
+
       for(let j=0;j<n;j++){
         if(fila_antes[j]===1 && i!==j){
           let aporta = false;
           for(let k=0;k<n;k++) if(matriz_p2[j][k]===1 && fila_nueva[k]===0) { aporta=true; break; }
           if(aporta){
-            log(`    → Hay un 1 en columna ${j}, colocando 1's en la fila ${j}: ${JSON.stringify(matriz_p2[j])}`);
+            
             for(let k=0;k<n;k++) if(matriz_p2[j][k]===1) fila_nueva[k]=1;
           }
         }
@@ -189,21 +286,19 @@ function analizar(){
       if(JSON.stringify(fila_nueva) !== JSON.stringify(fila_antes)){
         hubo_cambios = true;
         matriz_p2[i] = fila_nueva;
-        log(`    Fila ${i} actualizada: ${JSON.stringify(fila_antes)} → ${JSON.stringify(fila_nueva)}`);
-        log('✔ Fila actualizada correctamente');
+        
       } else {
-        log(`    Fila ${i} sin mas cambios`);
+        
       }
       iter++;
     }
     // mostrar matriz parcial
-    log(`  Matriz despues de procesar la fila ${i}:`);
-    for(let r=0;r<n;r++) log(JSON.stringify(matriz_p2[r]));
-    log('\n');
+    log(`  🟦 Matriz después de procesar la fila ${i}:`);
+    logMatrix(matriz_p2);
   }
 
   // Paso 3: ordenar filas y columnas por numero de unos
-  log('PASO 3: ORDENAR FILAS Y COLUMNAS POR numero DE UNOS');
+  log('PASO 3: ORDENAR FILAS Y COLUMNAS por numero de UNOS');
   const conteo_unos = [];
   for(let i=0;i<n;i++){
     const fila = matriz_p2[i];
@@ -215,13 +310,14 @@ function analizar(){
 
   const filas_ordenadas = Array.from({length:n}, ()=>Array(n).fill(0));
   for(let i=0;i<n;i++) for(let j=0;j<n;j++) filas_ordenadas[i][j] = matriz_p2[orden_nodos[i]][j];
+  log('\n');
   log('Matriz despues de ordenar FILAS:');
-  filas_ordenadas.forEach(r => log(JSON.stringify(r)));
+  logMatrix(filas_ordenadas, "Matriz después de ordenar FILAS:");
 
   const matriz_p3 = Array.from({length:n}, ()=>Array(n).fill(0));
   for(let i=0;i<n;i++) for(let j=0;j<n;j++) matriz_p3[i][j] = filas_ordenadas[i][orden_nodos[j]];
   log('Matriz despues de ordenar FILAS Y COLUMNAS:');
-  matriz_p3.forEach(r => log(JSON.stringify(r)));
+  logMatrix(matriz_p3, "Matriz después de ordenar FILAS Y COLUMNAS:");
 
   // Paso 4: identificar bloques de 1s (= componentes)
   log('PASO 4: IDENTIFICAR COMPONENTES CONEXAS');
@@ -254,17 +350,8 @@ function analizar(){
 
   log(`numero total de componentes: ${componentes.length}`);
   componentes.forEach((c,idx)=> log(`Componente ${idx+1}: ${JSON.stringify(c)} (tamaño ${c.length})`));
+  logMatrixResaltada(matriz_p3, bloques);
 
-  // resumen
-  log('\nRESUMEN DE COMPONENTES CONEXAS');
-  componentes.forEach((comp, idx) => {
-    const ar_comp = aristas.filter(([u,v]) => comp.includes(u) && comp.includes(v));
-    log(`Componente ${idx+1}:`);
-    log(`  Nodos: ${JSON.stringify(comp)}`);
-    log(`  Cantidad de nodos: ${comp.length}`);
-    log(`  Aristas: ${JSON.stringify(ar_comp)}`);
-    log(`  Cantidad de aristas: ${ar_comp.length}`);
-  });
 
   // recolor y redraw
   draw();
