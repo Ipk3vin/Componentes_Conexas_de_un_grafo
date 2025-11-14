@@ -1,13 +1,23 @@
 // app.js — Lógica del grafo (conversión desde PROYECTO.py)
+let analizado = false;
 
 const canvas = document.getElementById('grafoCanvas');
 const ctx = canvas.getContext('2d');
 const inputN = document.getElementById('inputN');
 const btnGen = document.getElementById('btnGen');
+const btnRegresar = document.getElementById('btnRegresar');
+
 const btnConectar = document.getElementById('btnConectar');
 const btnLimpiar = document.getElementById('btnLimpiar');
 const btnVer = document.getElementById('btnVer');
 const logArea = document.getElementById('logArea');
+
+
+
+btnVer.style.display = 'none';
+btnRegresar.style.display = 'none';
+
+
 
 let n = 0;
 let nodos = []; // [{x,y}]
@@ -119,8 +129,19 @@ function randomConnect(){
   log(`✓ ${aristas.length} conexiones dirigidas generadas aleatoriamente`);
 }
 
-function limpiar(){ aristas=[]; crearMatriz(n); componentes=[]; nodoSeleccionado=null; draw(); clearLog(); log('Conexiones limpiadas'); }
+function limpiar(){ 
+  aristas=[];
+  crearMatriz(n);
+  componentes=[];
+  nodoSeleccionado=null;
+  draw();
+  clearLog();
+  log('Conexiones limpiadas');
 
+  // ocultar botones de ver/regresar
+  btnVer.style.display = 'none';
+  btnRegresar.style.display = 'none';
+}
 function getComponentColor(nodeIndex){
   for(let i=0;i<componentes.length;i++) if(componentes[i].includes(nodeIndex)) return palette[i % palette.length];
   return '#43A047';
@@ -247,7 +268,12 @@ function analizar(){
 
   // recolor y redraw
   draw();
+  analizado = true;
+  btnVer.style.display = "inline-block";
 }
+// Mostrar botón "Ver Grafos Conexos" solo cuando termine el análisis
+btnVer.style.display = 'inline-block';
+btnRegresar.style.display = 'none';
 
 btnGen.addEventListener('click', ()=>{ generarNodos(); });
 btnLimpiar.addEventListener('click', ()=>{ limpiar(); });
@@ -258,6 +284,11 @@ btnConectar.addEventListener('click', ()=>{
 });
 btnVer.addEventListener('click', ()=>{
   if(!componentes.length){ log('Primero analiza las componentes.'); return; }
+
+  // Ocultar botón Ver y mostrar Regresar
+  btnVer.style.display = 'none';
+  btnRegresar.style.display = 'inline-block';
+
   // dibujar subgrafos en mosaico
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const cols = Math.min(componentes.length, 3);
@@ -278,5 +309,61 @@ btnVer.addEventListener('click', ()=>{
   }
 });
 
+
+btnRegresar.addEventListener('click', ()=>{
+  // Ocultar regresar, mostrar ver
+  btnRegresar.style.display = 'none';
+  btnVer.style.display = 'inline-block';
+
+  // Restaurar el grafo original (redibujar con el estado actual de nodos y aristas)
+  draw();
+});
+
 // init
 generarNodos();
+
+
+const portada = document.getElementById("portada");
+const btnPortada = document.getElementById("btnPortada");
+const btnEntrar = document.getElementById("btnEntrar");
+
+
+btnEntrar.addEventListener("click", () => {
+  portada.style.opacity = "0";
+  portada.style.transition = "0.6s";
+  setTimeout(() => { portada.style.display = "none"; }, 600);
+});
+
+// === REGRESAR A LA PORTADA ===
+
+// Cuando el usuario entra a la app, el botón "Portada" aparece
+btnEntrar.addEventListener("click", () => {
+    portada.style.opacity = "0";
+    setTimeout(() => { portada.style.display = "none"; }, 500);
+
+    // mostramos el botón Portada en la aplicación
+    btnPortada.style.display = "inline-block";
+
+    // si ya se analizó antes, restauramos el botón Ver grafos
+    if (analizado) {
+        btnVer.style.display = "inline-block";
+    }
+});
+
+// Cuando presiona el botón "Portada"
+btnPortada.addEventListener("click", () => {
+    // mostrar portada
+    portada.style.display = "flex";
+    portada.style.opacity = "1";
+
+    // ocultar botón portada mientras estás EN portada
+    btnPortada.style.display = "none";
+
+    // ocultar solo el botón de regresar al grafo original
+    btnRegresar.style.display = "none";
+});
+
+
+
+portada.style.display = "flex";
+portada.style.opacity = "1";
